@@ -1,0 +1,264 @@
+:root {
+  --bg: #f4efe6;
+  --paper: rgba(255, 249, 240, 0.78);
+  --paper-strong: #fffaf2;
+  --ink: #1f1a17;
+  --muted: #6e6257;
+  --accent: #9a3412;
+  --accent-soft: #e8b179;
+  --line: rgba(60, 38, 21, 0.12);
+  --shadow: 0 24px 80px rgba(77, 44, 14, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(154, 52, 18, 0.16), transparent 32%),
+    radial-gradient(circle at right 20%, rgba(115, 138, 123, 0.18), transparent 22%),
+    linear-gradient(180deg, #f7f1e7 0%, #efe6d7 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0 72px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.3fr 0.9fr;
+  gap: 24px;
+  align-items: stretch;
+  margin-bottom: 24px;
+}
+
+.hero-copy,
+.hero-panel,
+.glass-card,
+.track-card,
+.rule-card,
+.reporting-card,
+.resource-card,
+.roadmap-card {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+}
+
+.hero-copy {
+  padding: 44px;
+  border-radius: 28px;
+}
+
+.hero-copy h1 {
+  margin: 0 0 18px;
+  font-size: clamp(2.7rem, 5vw, 5.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.lede {
+  max-width: 55ch;
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.eyebrow,
+.section-kicker,
+.panel-label,
+.roadmap-card span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.76rem;
+  color: var(--accent);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.primary-link,
+.secondary-link {
+  padding: 14px 18px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.primary-link {
+  background: var(--ink);
+  color: #fffaf5;
+}
+
+.secondary-link {
+  border: 1px solid var(--line);
+  background: rgba(255, 250, 242, 0.66);
+}
+
+.primary-link:hover,
+.secondary-link:hover {
+  transform: translateY(-1px);
+}
+
+.hero-panel {
+  border-radius: 28px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  justify-content: center;
+}
+
+.signal-card {
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--paper-strong);
+  border: 1px solid rgba(154, 52, 18, 0.12);
+}
+
+.signal-card strong,
+.focus-grid h2,
+.split-section h2,
+.standards-section h2,
+.reporting-section h2,
+.roadmap-section h2 {
+  font-weight: 600;
+}
+
+.signal-card p,
+.glass-card p,
+.track-card li,
+.rule-card p,
+.reporting-card li,
+.resource-card li,
+.roadmap-card p,
+.split-section p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.focus-grid,
+.rules-grid,
+.roadmap-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.focus-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 24px;
+}
+
+.glass-card,
+.track-card,
+.rule-card,
+.reporting-card,
+.resource-card,
+.roadmap-card {
+  border-radius: 24px;
+  padding: 28px;
+}
+
+.split-section,
+.reporting-section {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+  align-items: start;
+}
+
+.stacked-panels {
+  display: grid;
+  gap: 16px;
+}
+
+.track-card ul,
+.resource-card ul,
+.reporting-card ol {
+  margin: 16px 0 0;
+  padding-left: 20px;
+}
+
+.track-card h3,
+.roadmap-card h3 {
+  margin: 8px 0 10px;
+  font-size: 1.2rem;
+}
+
+.standards-section,
+.roadmap-section {
+  margin-bottom: 24px;
+}
+
+.section-heading {
+  max-width: 760px;
+  margin-bottom: 18px;
+}
+
+.rules-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.rule-card {
+  min-height: 180px;
+  display: flex;
+  align-items: flex-end;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 242, 0.34), rgba(255, 250, 242, 0.92)),
+    linear-gradient(135deg, rgba(154, 52, 18, 0.08), rgba(86, 115, 105, 0.08));
+}
+
+.reporting-card,
+.resource-card {
+  min-height: 100%;
+}
+
+.roadmap-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 960px) {
+  .hero,
+  .focus-grid,
+  .split-section,
+  .reporting-section,
+  .rules-grid,
+  .roadmap-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-copy {
+    padding: 32px;
+  }
+
+  .page-shell {
+    width: min(100% - 24px, 1180px);
+    padding: 20px 0 48px;
+  }
+}

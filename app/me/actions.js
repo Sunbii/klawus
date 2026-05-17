@@ -106,6 +106,7 @@ export async function saveOwnColumnAction(formData) {
   const excerpt = String(formData.get("excerpt") || "").trim();
   const body = String(formData.get("body") || "");
   const cat = String(formData.get("cat") || "cat-realestate");
+  const coverImageId = String(formData.get("coverImageId") || "").trim() || null;
   const sponsorLabel = String(formData.get("sponsorLabel") || "").trim() || null;
   const sponsorWho = String(formData.get("sponsorWho") || "").trim() || null;
   const sponsorContact = String(formData.get("sponsorContact") || "").trim() || null;
@@ -119,7 +120,7 @@ export async function saveOwnColumnAction(formData) {
     await prisma.column.update({
       where: { id },
       data: {
-        title, field, excerpt, body, cat,
+        title, field, excerpt, body, cat, coverImageId,
         sponsorLabel, sponsorWho, sponsorContact,
         published: publish,
         publishedAt: publish ? existing.publishedAt ?? new Date() : null,
@@ -129,7 +130,7 @@ export async function saveOwnColumnAction(formData) {
     await prisma.column.create({
       data: {
         slug: slugify(title, "column"),
-        title, field, excerpt, body, cat,
+        title, field, excerpt, body, cat, coverImageId,
         sponsorLabel, sponsorWho, sponsorContact,
         published: publish,
         publishedAt: publish ? new Date() : null,
@@ -139,6 +140,7 @@ export async function saveOwnColumnAction(formData) {
   }
   revalidatePath("/me");
   revalidatePath("/");
+  if (id) revalidatePath(`/columns/${id}`);
   redirect("/me");
 }
 

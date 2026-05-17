@@ -6,6 +6,8 @@ export const dynamic = "force-dynamic";
 
 function mapColumn(c) {
   return {
+    slug: c.slug,
+    coverImageId: c.coverImageId,
     cat: c.cat,
     field: c.field,
     title: c.title,

@@ -78,8 +78,22 @@ model User {
 
   columns         Column[]
   serviceRequests ServiceRequest[]
+  uploads         UploadedFile[]
 
   createdAt    DateTime    @default(now())
+}
+
+model UploadedFile {
+  id         String   @id @default(cuid())
+  filename   String
+  mimeType   String
+  size       Int
+  bytes      Bytes
+  uploaderId String?
+  uploader   User?    @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+
+  columnCovers Column[]
 }
 
 model Column {
@@ -97,6 +111,9 @@ model Column {
 
   authorId    String
   author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  coverImageId String?
+  coverImage   UploadedFile? @relation(fields: [coverImageId], references: [id], onDelete: SetNull)
 
   sponsorLabel   String?
   sponsorWho     String?

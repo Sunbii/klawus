@@ -363,24 +363,41 @@ export default function HomeClient({ dbScammers, dbColumns, session } = {}) {
 
           {/* SECTION: 변호사 컬럼 (1+1+1+1) */}
           <RowHead name="변호사 컬럼" />
-          {columns4.map((c) => (
-            <article id={c === columns4[0] ? "columns" : undefined} key={c.title} className="span-1 column-card">
-              <span className={`img-slot thumb ${c.cat}`} aria-hidden="true" />
-              <div className="column-body">
-                <span className="cat-line">{c.field}</span>
-                <h3>{c.title}</h3>
-                <p className="excerpt">{c.excerpt}</p>
-                <div className="column-byline">By <strong>{c.author}</strong> · {c.detail}</div>
-              </div>
-              <div className="sponsor">
-                <span className="sponsor-label">후원</span>
-                <p>
-                  <strong>{c.sponsor.label}</strong> — {c.sponsor.who}<br />
-                  <span className="muted">{c.sponsor.contact}</span>
-                </p>
-              </div>
-            </article>
-          ))}
+          {columns4.map((c) => {
+            const href = c.slug ? `/columns/${c.slug}` : null;
+            const TitleEl = href ? "a" : "span";
+            return (
+              <article id={c === columns4[0] ? "columns" : undefined} key={c.title} className="span-1 column-card">
+                {c.coverImageId ? (
+                  <a href={href || "#"} aria-label={c.title}>
+                    <img
+                      src={`/api/files/${c.coverImageId}`}
+                      alt=""
+                      className="img-slot thumb"
+                      style={{ objectFit: "cover", width: "100%" }}
+                    />
+                  </a>
+                ) : (
+                  <span className={`img-slot thumb ${c.cat}`} aria-hidden="true" />
+                )}
+                <div className="column-body">
+                  <span className="cat-line">{c.field}</span>
+                  <h3>
+                    <TitleEl href={href || undefined} style={{ color: "inherit" }}>{c.title}</TitleEl>
+                  </h3>
+                  <p className="excerpt">{c.excerpt}</p>
+                  <div className="column-byline">By <strong>{c.author}</strong> · {c.detail}</div>
+                </div>
+                <div className="sponsor">
+                  <span className="sponsor-label">후원</span>
+                  <p>
+                    <strong>{c.sponsor.label}</strong> — {c.sponsor.who}<br />
+                    <span className="muted">{c.sponsor.contact}</span>
+                  </p>
+                </div>
+              </article>
+            );
+          })}
 
           {/* SECTION: 경고 명단 */}
           <RowHead name="경고 명단" />

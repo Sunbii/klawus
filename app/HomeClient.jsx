@@ -180,10 +180,32 @@ function RowHead({ name, more = "더보기", sub = false }) {
   );
 }
 
-export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, session } = {}) {
+const DEFAULT_LABELS = {
+  "site.tagline": "변호사들의 노력으로 한인 사회를 맑게 하는 장치",
+  "site.subtagline": "행위와 증거만 다룬다. 한인 사회 범죄·사기 예방과 피해자 구제 중심.",
+  "nav.home": "주요 사건", "nav.news": "사기 뉴스", "nav.columns": "변호사 컬럼",
+  "nav.registry": "사기꾼 명단", "nav.patterns": "사기 기법 도감",
+  "nav.voices": "이렇게 당했다", "nav.relief": "피해자 구제 절차",
+  "nav.directory": "변호사 찾기", "nav.articles": "사기사·사례·가이드",
+  "nav.businesses": "정직한 업체", "nav.publicNotice": "사기꾼 공시",
+  "nav.search": "검색", "nav.report": "사기 신고",
+  "section.voices": "이렇게 당했다",
+  "section.businesses": "정직한 업체",
+  "section.alerts": "사기 주의보",
+};
+function L(labels, key) {
+  return (labels && labels[key]) || DEFAULT_LABELS[key] || key;
+}
+
+export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, dbAlerts, dbBusinesses, dbArticlesByCat, session, labels } = {}) {
   const scammers = dbScammers && dbScammers.length ? dbScammers : FALLBACK_SCAMMERS;
   const columns4 = dbColumns && dbColumns.length ? dbColumns : FALLBACK_COLUMNS;
   const scamTypes = dbScamTypes && dbScamTypes.length ? dbScamTypes : FALLBACK_SCAMTYPES;
+  const alerts = dbAlerts || [];
+  const businesses = dbBusinesses || [];
+  const articlesByCat = dbArticlesByCat || { HISTORY: [], CASE_STUDY: [], PREVENTION: [], SAFE_TX: [] };
+  const popupAlert = alerts.find((a) => a.popup);
+  const lbl = (key) => L(labels, key);
 
   const [q, setQ] = useState("");
   const [notice, setNotice] = useState(false);
@@ -249,16 +271,18 @@ export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, session
 
   return (
     <>
-      {notice && (
+      {notice && popupAlert && (
         <div className="notice-overlay" role="dialog" aria-modal="true"
           onClick={(e) => { if (e.target === e.currentTarget) dismissNotice(false); }}>
           <div className="notice-panel">
             <button type="button" className="notice-close" aria-label="닫기" onClick={() => dismissNotice(false)}>×</button>
-            <span className="notice-tag">긴급 경고</span>
-            <h3>USPS·IRS 사칭 환급 우편 사기 — NJ 19건 동시 확인</h3>
-            <p>공식 인장과 한국어로 위조된 우편이 한인 가정으로 발송되고 있습니다. ‘24시간 내 회신’ 압박 + Zelle 송금 요구가 핵심 패턴입니다. 절대 회신·송금하지 마세요. 즉시 USPS Postal Inspection(1-877-876-2455)에 신고하세요.</p>
+            <span className="notice-tag">{popupAlert.severity === "HIGH" ? "긴급 경고" : popupAlert.severity === "MEDIUM" ? "주의" : "안내"}</span>
+            <h3>{popupAlert.title}</h3>
+            <p>{popupAlert.body}</p>
             <div className="notice-actions">
-              <a href="#registry" onClick={() => dismissNotice(false)}>경고 명단 보기</a>
+              {popupAlert.link
+                ? <a href={popupAlert.link} onClick={() => dismissNotice(false)}>자세히 보기</a>
+                : <a href="#registry" onClick={() => dismissNotice(false)}>사기꾼 명단</a>}
               <button type="button" className="ghost" onClick={() => dismissNotice(true)}>다시 보지 않기</button>
             </div>
           </div>
@@ -317,6 +341,8 @@ export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, session
       <header className="site-header">
         <div className="site-header-inner">
           <a href="/" className="wordmark" aria-label="K-lawus 홈">K&middot;lawus</a>
+          <p className="site-tagline">{lbl("site.tagline")}</p>
+          <p className="site-subtagline">{lbl("site.subtagline")}</p>
         </div>
       </header>
 
@@ -327,7 +353,7 @@ export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, session
           <a href="#columns">변호사 컬럼</a>
           <a href="#registry">경고 명단</a>
           <a href="#patterns">사기 유형 도감</a>
-          <a href="#voices">피해자의 목소리</a>
+          <a href="#voices">{lbl("nav.voices")}</a>
           <a href="#relief">구제 가이드</a>
           <a href="#directory">변호사 찾기</a>
         </div>
@@ -374,6 +400,21 @@ export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, session
           </aside>
 
           {/* BRIEFS full row */}
+          {alerts.length > 0 && (
+            <div className="alert-strip">
+              <span className="alert-strip-label">사기 주의보</span>
+              <ul className="alert-strip-list">
+                {alerts.map((a) => (
+                  <li key={a.id} className={`alert-item alert-${a.severity}`}>
+                    <strong>{a.title}</strong>
+                    <span> — {a.body}</span>
+                    {a.link && <a href={a.link}>자세히 →</a>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="briefs-bar">
             <div className="briefs-bar-inner">
               <span className="briefs-label">단신</span>
@@ -610,8 +651,8 @@ export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, session
           {/* AD full row */}
           <div className="ad-banner"><div><strong>AD</strong>구좌 한정 — 카테고리 후원 (부동산·이민·형사) / ads@klawus.com</div></div>
 
-          {/* SECTION: 피해자의 목소리 */}
-          <RowHead name="피해자의 목소리" />
+          {/* SECTION: 이렇게 당했다 (피해자의 목소리) */}
+          <RowHead name={lbl("section.voices")} />
           {victimStories.map((v) => (
             <article key={v.title} id={v === victimStories[0] ? "voices" : undefined} className="span-1 voice-card">
               <span className={`img-slot thumb ${v.cat}`} aria-hidden="true" />
@@ -659,6 +700,57 @@ export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, session
           <div className="span-2 ad-inline">
             <div><strong>AD</strong>변호사 디렉터리 우측 광고 — 분야 표시형 텍스트 광고 / ads@klawus.com</div>
           </div>
+
+          {/* SECTION: 정직한 업체 */}
+          {businesses.length > 0 && (
+            <>
+              <RowHead name={lbl("section.businesses")} more="정직한 업체 전체" />
+              {businesses.slice(0, 4).map((b) => (
+                <article key={b.id} className="span-1 column-card">
+                  {b.photoFileId ? (
+                    <img src={`/api/files/${b.photoFileId}`} alt={b.name} className="img-slot thumb" style={{ width: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <span className="img-slot thumb" aria-hidden="true" />
+                  )}
+                  <div className="column-body">
+                    <span className="cat-line">{b.category}</span>
+                    <h3>{b.name}</h3>
+                    <p className="excerpt">{b.note || `${b.location}${b.phone ? ` · ${b.phone}` : ""}`}</p>
+                    {b.endorsedBy && (
+                      <div className="column-byline">추천 — <strong>{b.endorsedBy}</strong></div>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </>
+          )}
+
+          {/* SECTION: 빠른 진입 - 사기사·사례·가이드 + 공시 */}
+          <RowHead name="사기사 · 사례 · 가이드 · 공시" more="" />
+          <a href="/articles?cat=HISTORY" className="span-1 directory-card">
+            <span className="dir-code">사</span>
+            <div><strong>{lbl("section.articles.history") || "미주 한인사회 사기사"}</strong><span>역사·맥락</span></div>
+          </a>
+          <a href="/articles?cat=CASE_STUDY" className="span-1 directory-card">
+            <span className="dir-code">례</span>
+            <div><strong>{lbl("section.articles.cases") || "사기 사례"}</strong><span>주요 케이스 분석</span></div>
+          </a>
+          <a href="/articles?cat=PREVENTION" className="span-1 directory-card">
+            <span className="dir-code">대</span>
+            <div><strong>{lbl("section.articles.prevention") || "사기 대처방법"}</strong><span>전·후 가이드</span></div>
+          </a>
+          <a href="/articles?cat=SAFE_TX" className="span-1 directory-card">
+            <span className="dir-code">안</span>
+            <div><strong>{lbl("section.articles.safetx") || "안전 거래 방법"}</strong><span>거래 전 체크</span></div>
+          </a>
+          <a href="/scammers/public-notice" className="span-2 directory-card">
+            <span className="dir-code">공</span>
+            <div><strong>{lbl("section.publicNotice") || "사기꾼 공시"}</strong><span>증거 확보 단계만 공시</span></div>
+          </a>
+          <a href="/businesses" className="span-2 directory-card">
+            <span className="dir-code">정</span>
+            <div><strong>{lbl("section.businesses") || "정직한 업체"}</strong><span>변호사 추천</span></div>
+          </a>
         </div>
       </main>
 
@@ -671,7 +763,7 @@ export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, session
           <ul className="footer-links">
             <li><a href="#registry">경고 명단</a></li>
             <li><a href="#patterns">사기 유형 도감</a></li>
-            <li><a href="#voices">피해자의 목소리</a></li>
+            <li><a href="#voices">{lbl("section.voices")}</a></li>
             <li><a href="#relief">구제 가이드</a></li>
             <li><a href="#columns">변호사 컬럼</a></li>
             <li><a href="#directory">변호사 찾기</a></li>

@@ -1,5 +1,6 @@
 import { prisma } from "../lib/db";
 import { getSessionState } from "../lib/auth";
+import { getLabels } from "../lib/labels";
 import HomeClient from "./HomeClient.jsx";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +62,9 @@ async function loadData() {
   let dbColumns = [];
   let dbScammers = [];
   let dbScamTypes = [];
+  let dbAlerts = [];
+  let dbBusinesses = [];
+  let dbArticlesByCat = { HISTORY: [], CASE_STUDY: [], PREVENTION: [], SAFE_TX: [] };
   try {
     const cols = await prisma.column.findMany({
       where: { published: true },
@@ -94,20 +98,62 @@ async function loadData() {
   } catch (e) {
     console.error("home: scamType load failed", e?.message);
   }
-  return { dbColumns, dbScammers, dbScamTypes };
+  try {
+    dbAlerts = await prisma.scamAlert.findMany({
+      where: {
+        active: true,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
+      orderBy: [{ severity: "asc" }, { createdAt: "desc" }],
+      take: 6,
+    });
+  } catch (e) {
+    console.error("home: alerts load failed", e?.message);
+  }
+  try {
+    dbBusinesses = await prisma.honestBusiness.findMany({
+      where: { published: true },
+      orderBy: [{ order: "asc" }, { updatedAt: "desc" }],
+      take: 8,
+    });
+  } catch (e) {
+    console.error("home: businesses load failed", e?.message);
+  }
+  try {
+    const arts = await prisma.article.findMany({
+      where: { published: true },
+      orderBy: [{ category: "asc" }, { order: "asc" }, { publishedAt: "desc" }],
+      take: 24,
+    });
+    dbArticlesByCat = { HISTORY: [], CASE_STUDY: [], PREVENTION: [], SAFE_TX: [] };
+    for (const a of arts) {
+      if (dbArticlesByCat[a.category] && dbArticlesByCat[a.category].length < 4) {
+        dbArticlesByCat[a.category].push({
+          id: a.id, slug: a.slug, title: a.title, excerpt: a.excerpt,
+          cat: a.cat, coverImageId: a.coverImageId,
+        });
+      }
+    }
+  } catch (e) {
+    console.error("home: articles load failed", e?.message);
+  }
+  return { dbColumns, dbScammers, dbScamTypes, dbAlerts, dbBusinesses, dbArticlesByCat };
 }
 
 export default async function HomePage() {
-  const [{ dbColumns, dbScammers, dbScamTypes }, session] = await Promise.all([
-    loadData(),
-    getSessionState(),
+  const [data, session, labels] = await Promise.all([
+    loadData(), getSessionState(), getLabels(),
   ]);
   return (
     <HomeClient
-      dbColumns={dbColumns}
-      dbScammers={dbScammers}
-      dbScamTypes={dbScamTypes}
+      dbColumns={data.dbColumns}
+      dbScammers={data.dbScammers}
+      dbScamTypes={data.dbScamTypes}
+      dbAlerts={data.dbAlerts}
+      dbBusinesses={data.dbBusinesses}
+      dbArticlesByCat={data.dbArticlesByCat}
       session={session}
+      labels={labels}
     />
   );
 }

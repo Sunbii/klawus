@@ -118,9 +118,11 @@ model UploadedFile {
   uploader   User?    @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
   createdAt  DateTime @default(now())
 
-  columnCovers   Column[]
-  scammerPhotos  Scammer[]  @relation("ScammerPhoto")
-  scamTypeIcons  ScamType[] @relation("ScamTypeIcon")
+  columnCovers     Column[]
+  scammerPhotos    Scammer[]         @relation("ScammerPhoto")
+  scamTypeIcons    ScamType[]        @relation("ScamTypeIcon")
+  articleCovers    Article[]         @relation("ArticleCover")
+  businessPhotos   HonestBusiness[]  @relation("HonestBusinessPhoto")
 }
 
 model Column {
@@ -257,4 +259,78 @@ model ServiceRequest {
 
   @@index([status])
   @@index([userId])
+}
+
+// ============== Round 9 additions ==============
+
+model SiteLabel {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+enum ArticleCategory {
+  HISTORY        // 미주 한인사회 사기사 (long-form history articles)
+  CASE_STUDY     // 사기 사례 (notable case studies, deeper than the warning entries)
+  PREVENTION     // 사기 대처방법 (전후 가이드)
+  SAFE_TX        // 사기를 피할 수 있는 거래 방법
+}
+
+model Article {
+  id           String          @id @default(cuid())
+  slug         String          @unique
+  category     ArticleCategory
+  title        String
+  excerpt      String
+  body         String
+  cat          String          @default("cat-crime")
+  coverImageId String?
+  coverImage   UploadedFile?   @relation("ArticleCover", fields: [coverImageId], references: [id], onDelete: SetNull)
+  order        Int             @default(0)
+  published    Boolean         @default(false)
+  publishedAt  DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([category, published, publishedAt])
+}
+
+model HonestBusiness {
+  id          String        @id @default(cuid())
+  name        String
+  category    String        // 식당·마트·세탁·병원 등
+  location    String
+  phone       String?
+  website     String?
+  endorsedBy  String?       // 추천한 변호사·매체
+  note        String?
+  photoFileId String?
+  photo       UploadedFile? @relation("HonestBusinessPhoto", fields: [photoFileId], references: [id], onDelete: SetNull)
+  published   Boolean       @default(true)
+  order       Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([published, updatedAt])
+}
+
+enum AlertSeverity {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model ScamAlert {
+  id        String         @id @default(cuid())
+  title     String
+  body      String
+  link      String?
+  severity  AlertSeverity  @default(HIGH)
+  active    Boolean        @default(true)
+  popup     Boolean        @default(false)
+  expiresAt DateTime?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([active, createdAt])
 }

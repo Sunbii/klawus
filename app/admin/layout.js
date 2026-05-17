@@ -21,10 +21,14 @@ export default async function AdminLayout({ children }) {
             <Link href="/admin/invites">초청 코드</Link>
             <Link href="/admin/users">사용자</Link>
             <Link href="/admin/columns">컬럼</Link>
-            <Link href="/admin/scammers">경고 명단</Link>
-            <Link href="/admin/scam-types">사기 유형</Link>
+            <Link href="/admin/scammers">사기꾼 명단</Link>
+            <Link href="/admin/scam-types">사기 기법</Link>
+            <Link href="/admin/articles">사기사·사례·가이드</Link>
+            <Link href="/admin/businesses">정직한 업체</Link>
+            <Link href="/admin/alerts">사기 주의보</Link>
             <Link href="/admin/services">서비스 요청</Link>
             <Link href="/admin/notifications">이메일 알림</Link>
+            <Link href="/admin/labels">메뉴·라벨</Link>
             <form action={adminLogoutAction} style={{ display: "inline" }}>
               <button type="submit" className="cms-link-btn">로그아웃</button>
             </form>

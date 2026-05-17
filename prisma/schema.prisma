@@ -1,0 +1,92 @@
+// K-lawus CMS schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ScammerStatus {
+  PENDING
+  SCREENED
+  EVIDENCE
+}
+
+model InviteCode {
+  id         String    @id @default(cuid())
+  code       String    @unique
+  note       String?
+  createdAt  DateTime  @default(now())
+  redeemedAt DateTime?
+  lawyer     Lawyer?
+}
+
+model Lawyer {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String
+  name         String
+  firm         String?
+  barNumber    String?
+  state        String?
+  field        String?
+  bio          String?
+  createdAt    DateTime    @default(now())
+
+  inviteCodeId String?     @unique
+  inviteCode   InviteCode? @relation(fields: [inviteCodeId], references: [id])
+
+  columns      Column[]
+}
+
+model Column {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  field       String
+  excerpt     String
+  body        String
+  cat         String    @default("cat-realestate")
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  authorId    String
+  author      Lawyer    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  sponsorLabel   String?
+  sponsorWho     String?
+  sponsorContact String?
+
+  @@index([published, publishedAt])
+  @@index([authorId])
+}
+
+model Scammer {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  type        String
+  location    String
+  aliases     String?
+  cases       Int           @default(1)
+  status      ScammerStatus @default(PENDING)
+  cat         String        @default("cat-crime")
+  brief       String
+  overview    String
+  patterns    String[]
+  progress    String
+  damage      String?
+  firstReport String?
+  lastUpdate  String?
+  published   Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([published, updatedAt])
+}

@@ -1,7 +1,12 @@
 import { notFound } from "next/navigation";
 import { prisma } from "../../../../../lib/db";
 import { requireAdmin } from "../../../../../lib/auth";
-import { saveServiceAdminAction, deleteServiceAction } from "../../../actions";
+import {
+  saveServiceAdminAction,
+  deleteServiceAction,
+  generateDebtExportAction,
+  setBureauStatusAction,
+} from "../../../actions";
 
 const TYPE = {
   CREDIT_CHECK: "신용 조회",
@@ -119,9 +124,15 @@ export default async function AdminEditServicePage({ params }) {
               </label>
             </div>
 
-            <label className="cms-label">Metro 2 추출 파일 URL (생성한 경우)
-              <input name="metroExportUrl" defaultValue={s.metroExportUrl || ""} className="cms-input" placeholder="https://..." />
+            <label className="cms-label">핸드오프 export 파일 URL
+              <input name="metroExportUrl" defaultValue={s.metroExportUrl || ""} className="cms-input" placeholder="자동 생성 시 채워짐" />
             </label>
+            <p className="cms-muted cms-tiny" style={{ margin: 0 }}>
+              이 export는 사양 호환 Metro 2 파일이 아니며, 신용정보사 furnisher
+              포털에 입력하거나 라이선스된 변환 대행사에 넘기는 구조화 텍스트입니다.
+              Reporter 정보는 환경변수(<span className="cms-mono">REPORTER_NAME</span>,
+              <span className="cms-mono"> SUBSCRIBER_CODE</span> 등)에서 읽습니다.
+            </p>
           </fieldset>
         )}
 
@@ -130,6 +141,49 @@ export default async function AdminEditServicePage({ params }) {
           <a href="/admin/services" className="cms-btn">취소</a>
         </div>
       </form>
+
+      {s.type === "DEBT_CREDIT_REPORTING" && (
+        <fieldset className="cms-fieldset" style={{ marginTop: 18 }}>
+          <legend>신용정보사 보고 워크플로</legend>
+          <p className="cms-tiny" style={{ marginTop: 0 }}>
+            현재 상태: <strong>{s.bureauStatus || "NONE"}</strong>
+            {s.metroExportUrl && (
+              <> · <a className="cms-link" href={s.metroExportUrl} target="_blank" rel="noreferrer">현재 export 다운로드</a></>
+            )}
+          </p>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
+            <form action={generateDebtExportAction}>
+              <input type="hidden" name="id" value={s.id} />
+              <button type="submit" className="cms-btn-primary">
+                {s.metroExportUrl ? "핸드오프 export 재생성" : "핸드오프 export 생성"}
+              </button>
+            </form>
+
+            <form action={setBureauStatusAction}>
+              <input type="hidden" name="id" value={s.id} />
+              <input type="hidden" name="to" value="SUBMITTED" />
+              <button type="submit" className="cms-btn" disabled={!s.metroExportUrl}>신용정보사 제출 완료로 표시</button>
+            </form>
+
+            <form action={setBureauStatusAction}>
+              <input type="hidden" name="id" value={s.id} />
+              <input type="hidden" name="to" value="ACKNOWLEDGED" />
+              <button type="submit" className="cms-btn">신용정보사 확인됨으로 표시</button>
+            </form>
+
+            <form action={setBureauStatusAction}>
+              <input type="hidden" name="id" value={s.id} />
+              <input type="hidden" name="to" value="NONE" />
+              <button type="submit" className="cms-btn">상태 초기화</button>
+            </form>
+          </div>
+
+          <p className="cms-muted cms-tiny" style={{ marginTop: 10 }}>
+            워크플로: <strong>EXPORT 생성</strong> → 외부 변환·수동 입력으로 신용정보사 furnisher 포털 제출 → <strong>제출 완료</strong> 표시 → 신용정보사 응답 확인 후 <strong>확인됨</strong>.
+          </p>
+        </fieldset>
+      )}
 
       <form action={deleteServiceAction} style={{ marginTop: 18, borderTop: "1px solid var(--line)", paddingTop: 12 }}>
         <input type="hidden" name="id" value={s.id} />

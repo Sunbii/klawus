@@ -12,6 +12,7 @@ import {
   tplColumnPublished,
   tplScammerTransition,
 } from "../../lib/email";
+import { exportDebtReportFor } from "../../lib/debtReport";
 
 export async function adminLoginAction(formData) {
   const password = String(formData.get("password") || "");
@@ -226,4 +227,33 @@ export async function deleteServiceAction(formData) {
   const id = String(formData.get("id"));
   await prisma.serviceRequest.delete({ where: { id } });
   revalidatePath("/admin/services");
+}
+
+export async function generateDebtExportAction(formData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  try {
+    await exportDebtReportFor(id);
+  } catch (e) {
+    redirect(`/admin/services/${id}/edit?e=export`);
+  }
+  revalidatePath(`/admin/services/${id}/edit`);
+  redirect(`/admin/services/${id}/edit`);
+}
+
+const ALLOWED_BUREAU = ["NONE", "QUEUED", "EXPORTED", "SUBMITTED", "ACKNOWLEDGED"];
+
+export async function setBureauStatusAction(formData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const to = String(formData.get("to") || "");
+  if (!ALLOWED_BUREAU.includes(to)) {
+    redirect(`/admin/services/${id}/edit?e=bureau`);
+  }
+  await prisma.serviceRequest.update({
+    where: { id },
+    data: { bureauStatus: to },
+  });
+  revalidatePath(`/admin/services/${id}/edit`);
+  redirect(`/admin/services/${id}/edit`);
 }

@@ -698,6 +698,93 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   .cms-table { font-size: 12.5px; }
 }
 
+/* ===== Mobile polish (≤ 760px) — placeholders, nav, hero ===== */
+@media (max-width: 760px) {
+  /* Placeholder <span class="img-slot"> becomes a thin colored band
+     so empty gray boxes don't take up the whole viewport.
+     Real <img class="img-slot"> elements are unaffected. */
+  span.img-slot {
+    aspect-ratio: auto !important;
+    height: 8px !important;
+    min-height: 8px;
+  }
+
+  /* Utility bar — wrap and shrink instead of overflowing */
+  .utility-inner {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 4px;
+    font-size: 11.5px;
+    padding: 6px 14px;
+  }
+  .utility .sep { display: inline; }
+
+  /* Section nav — denser, but keep horizontal scroll for full list */
+  .section-nav a { padding: 8px 12px; font-size: 12.5px; }
+
+  /* Hero — tighter headline, narrower lead area */
+  .hero { padding: 16px 0 20px; }
+  .hero-lead h2 { font-size: 22px; line-height: 1.2; }
+  .hero-lead .dek { font-size: 13.5px; line-height: 1.6; }
+  .hero-lead .related li { font-size: 13px; }
+  .hero-thumbs { gap: 10px; }
+  .thumb-row { grid-template-columns: 64px 1fr; gap: 8px; padding-bottom: 10px; }
+  .thumb-row .img-slot { aspect-ratio: 1 / 1 !important; height: auto !important; }
+  .thumb-row h3 { font-size: 13px; }
+
+  /* Briefs strip — single column */
+  .briefs-bar { padding: 8px 0; }
+  .briefs-bar-inner { grid-template-columns: 1fr; row-gap: 6px; }
+  .briefs-label { border-right: none; padding-right: 0; font-size: 12px; }
+  .briefs-list { grid-template-columns: 1fr; gap: 4px; font-size: 12.5px; }
+
+  /* Row headers — tighter */
+  .row-head { padding: 8px 0 6px; }
+  .row-head .name { font-size: 17px; }
+  .row-head .name::before { height: 14px; width: 4px; }
+
+  /* News split list items */
+  .text-list li { font-size: 13.5px; padding: 8px 0 8px 12px; }
+  .text-list li .sub { font-size: 11.5px; }
+
+  /* Photo lead headline shrink */
+  .photo-lead h3 { font-size: 18px; }
+
+  /* Column / reg / voice / pattern cards — keep readable */
+  .column-card h3 { font-size: 14.5px; }
+  .reg-card h3 { font-size: 14px; }
+  .voice-card h3 { font-size: 14px; }
+  .pattern-card h3 { font-size: 14px; }
+  .pattern-card dl { grid-template-columns: 40px 1fr; font-size: 11.5px; }
+
+  /* Registry filter chip groups stack better */
+  .reg-hints { gap: 4px 6px; }
+  .reg-hints button { font-size: 11.5px; padding: 3px 7px; }
+
+  /* Ad banners — shorter on mobile */
+  .ad-banner { min-height: 80px; padding: 12px; font-size: 12px; }
+
+  /* Case card — image was column, becomes stacked */
+  .case-card { padding: 14px 14px 12px; gap: 12px; }
+  .case-card .img-slot.tall { aspect-ratio: auto !important; height: 10px !important; }
+  .case-id h3 { font-size: 16px; }
+  .case-block p, .case-block ul { font-size: 12.5px; }
+
+  /* Voices CTA wraps */
+  .voices-cta { padding: 12px 14px; font-size: 12.5px; gap: 8px; }
+
+  /* Wordmark slightly smaller */
+  .wordmark { font-size: 38px; }
+
+  /* Footer link grid 2-col already; tighten */
+  .footer-links { grid-template-columns: 1fr; gap: 4px; font-size: 12.5px; }
+}
+
+/* Show original hero left bar styling: keep small thumb image visible */
+@media (max-width: 760px) {
+  .thumb-row .img-slot::after { display: none; }
+}
+
 /* ===== Markdown editor + render ===== */
 .cms-editor-toolbar {
   display: flex; flex-wrap: wrap; gap: 6px; align-items: center;

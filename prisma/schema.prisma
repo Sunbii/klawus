@@ -49,6 +49,29 @@ enum BureauReportStatus {
   ACKNOWLEDGED
 }
 
+enum EmailStatus {
+  QUEUED
+  SENT
+  FAILED
+  SKIPPED
+}
+
+model EmailNotification {
+  id         String      @id @default(cuid())
+  to         String
+  subject    String
+  body       String
+  kind       String      // welcome_member | welcome_lawyer | service_received | service_status | column_published | report_received | report_status | scammer_transition | admin_notice
+  relatedId  String?
+  status     EmailStatus @default(QUEUED)
+  error      String?
+  createdAt  DateTime    @default(now())
+  sentAt     DateTime?
+
+  @@index([status, createdAt])
+  @@index([kind])
+}
+
 model InviteCode {
   id         String    @id @default(cuid())
   code       String    @unique

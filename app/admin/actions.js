@@ -6,6 +6,12 @@ import { prisma } from "../../lib/db";
 import { getSession } from "../../lib/session";
 import { requireAdmin, isAdminPasswordValid } from "../../lib/auth";
 import { generateInviteCode, slugify } from "../../lib/codes";
+import {
+  queueEmail,
+  tplServiceStatus,
+  tplColumnPublished,
+  tplScammerTransition,
+} from "../../lib/email";
 
 export async function adminLoginAction(formData) {
   const password = String(formData.get("password") || "");
@@ -51,17 +57,25 @@ export async function deleteInviteAction(formData) {
 export async function toggleColumnPublishAction(formData) {
   await requireAdmin();
   const id = String(formData.get("id"));
-  const col = await prisma.column.findUnique({ where: { id } });
+  const col = await prisma.column.findUnique({
+    where: { id },
+    include: { author: { select: { id: true, name: true, email: true } } },
+  });
   if (!col) return;
-  await prisma.column.update({
+  const becomingPublic = !col.published;
+  const updated = await prisma.column.update({
     where: { id },
     data: {
-      published: !col.published,
-      publishedAt: !col.published ? new Date() : col.publishedAt,
+      published: becomingPublic,
+      publishedAt: becomingPublic ? (col.publishedAt ?? new Date()) : col.publishedAt,
     },
   });
+  if (becomingPublic) {
+    await queueEmail(tplColumnPublished(col.author, { ...updated, slug: col.slug, title: col.title }));
+  }
   revalidatePath("/admin/columns");
   revalidatePath("/");
+  revalidatePath(`/columns/${col.slug}`);
 }
 
 export async function deleteColumnAction(formData) {
@@ -136,7 +150,11 @@ export async function transitionScammerAction(formData) {
   if (publishOverride === "on") update.published = true;
   if (publishOverride === "off") update.published = false;
 
-  await prisma.scammer.update({ where: { id }, data: update });
+  const refreshed = await prisma.scammer.update({
+    where: { id },
+    data: update,
+    include: { submittedBy: { select: { email: true } } },
+  });
   await prisma.scammerReview.create({
     data: {
       scammerId: id,
@@ -147,6 +165,11 @@ export async function transitionScammerAction(formData) {
       byAdmin: true,
     },
   });
+
+  const notifyEmail = refreshed.submittedBy?.email || refreshed.submitterEmail;
+  if (notifyEmail && update.status && update.status !== cur.status) {
+    await queueEmail(tplScammerTransition(notifyEmail, refreshed, note));
+  }
 
   revalidatePath("/admin/scammers");
   revalidatePath(`/admin/scammers/${id}/edit`);
@@ -180,7 +203,7 @@ export async function saveServiceAdminAction(formData) {
   const reportEquifax = formData.get("reportEquifax") === "on";
   const metroExportUrl = String(formData.get("metroExportUrl") || "").trim() || null;
 
-  await prisma.serviceRequest.update({
+  const updated = await prisma.serviceRequest.update({
     where: { id },
     data: {
       status, payment, priceCents,
@@ -188,7 +211,11 @@ export async function saveServiceAdminAction(formData) {
       bureauStatus, reportExperian, reportTransUnion, reportEquifax, metroExportUrl,
       completedAt: status === "COMPLETED" ? (existing.completedAt ?? new Date()) : null,
     },
+    include: { user: { select: { name: true, email: true } } },
   });
+  if (status !== existing.status) {
+    await queueEmail(tplServiceStatus(updated.user, updated));
+  }
   revalidatePath("/admin/services");
   revalidatePath("/me/services");
   redirect("/admin/services");

@@ -7,6 +7,12 @@ import { prisma } from "../../lib/db";
 import { getSession } from "../../lib/session";
 import { requireLawyer, requireUser } from "../../lib/auth";
 import { slugify } from "../../lib/codes";
+import {
+  queueEmail,
+  tplWelcomeMember,
+  tplWelcomeLawyer,
+  tplServiceReceived,
+} from "../../lib/email";
 
 export async function signupAction(formData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
@@ -25,6 +31,8 @@ export async function signupAction(formData) {
   const user = await prisma.user.create({
     data: { email, passwordHash, name, phone, state, role: "MEMBER" },
   });
+
+  await queueEmail(tplWelcomeMember(user));
 
   const session = await getSession();
   session.kind = "user";
@@ -67,6 +75,8 @@ export async function redeemAction(formData) {
     },
   });
   await prisma.inviteCode.update({ where: { id: invite.id }, data: { redeemedAt: new Date() } });
+
+  await queueEmail(tplWelcomeLawyer(user));
 
   const session = await getSession();
   session.kind = "user";
@@ -170,7 +180,7 @@ export async function submitServiceRequestAction(formData) {
     DEBT_CREDIT_REPORTING: 14900, // $149.00
   };
 
-  await prisma.serviceRequest.create({
+  const sr = await prisma.serviceRequest.create({
     data: {
       userId: user.id,
       type,
@@ -189,6 +199,7 @@ export async function submitServiceRequestAction(formData) {
       creditorName: type === "DEBT_CREDIT_REPORTING" ? (String(formData.get("creditorName") || "").trim() || null) : null,
     },
   });
+  await queueEmail(tplServiceReceived(user, sr));
   revalidatePath("/me/services");
   revalidatePath("/admin/services");
   redirect("/me/services");

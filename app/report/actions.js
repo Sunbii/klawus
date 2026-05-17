@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "../../lib/db";
 import { getSession } from "../../lib/session";
 import { slugify } from "../../lib/codes";
+import { queueEmail, tplReportReceived } from "../../lib/email";
 
 export async function submitReportAction(formData) {
   const session = await getSession();
@@ -54,6 +55,15 @@ export async function submitReportAction(formData) {
       byEmail: submitterEmail,
     },
   });
+
+  let notifyEmail = submitterEmail;
+  if (userId) {
+    const u = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+    notifyEmail = u?.email || notifyEmail;
+  }
+  if (notifyEmail) {
+    await queueEmail(tplReportReceived(notifyEmail, created));
+  }
 
   revalidatePath("/admin/scammers");
   redirect("/report/thanks");

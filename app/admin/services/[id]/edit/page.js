@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "../../../../../lib/db";
 import { requireAdmin } from "../../../../../lib/auth";
-import { saveServiceAdminAction, deleteServiceAction } from "../../actions";
+import { saveServiceAdminAction, deleteServiceAction } from "../../../actions";
 
 const TYPE = {
   CREDIT_CHECK: "신용 조회",

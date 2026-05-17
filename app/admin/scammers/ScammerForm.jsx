@@ -1,4 +1,5 @@
 import { saveScammerAction } from "../actions";
+import ImagePicker from "../../components/ImagePicker";
 
 const CATS = [
   ["cat-realestate", "부동산·임대"],
@@ -20,6 +21,14 @@ export default function ScammerForm({ scammer }) {
   return (
     <form action={saveScammerAction} className="cms-form">
       {v.id && <input type="hidden" name="id" value={v.id} />}
+
+      <ImagePicker
+        name="photoFileId"
+        defaultFileId={v.photoFileId || ""}
+        label="사진"
+        hint="당사자 동의·검증 후 게시. 권장 비율 1:1 (정사각형)"
+        maxHeight={200}
+      />
 
       <label className="cms-label">이름 / 사업체
         <input name="name" defaultValue={v.name || ""} required className="cms-input" />

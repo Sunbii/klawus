@@ -79,6 +79,8 @@ model User {
   columns         Column[]
   serviceRequests ServiceRequest[]
   uploads         UploadedFile[]
+  submittedScammers Scammer[]       @relation("ScammerSubmitter")
+  scammerReviews    ScammerReview[]
 
   createdAt    DateTime    @default(now())
 }
@@ -93,7 +95,9 @@ model UploadedFile {
   uploader   User?    @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
   createdAt  DateTime @default(now())
 
-  columnCovers Column[]
+  columnCovers   Column[]
+  scammerPhotos  Scammer[]  @relation("ScammerPhoto")
+  scamTypeIcons  ScamType[] @relation("ScamTypeIcon")
 }
 
 model Column {
@@ -141,10 +145,54 @@ model Scammer {
   firstReport String?
   lastUpdate  String?
   published   Boolean       @default(true)
+
+  photoFileId    String?
+  photo          UploadedFile? @relation("ScammerPhoto", fields: [photoFileId], references: [id], onDelete: SetNull)
+
+  submitterEmail String?
+  submittedById  String?
+  submittedBy    User?    @relation("ScammerSubmitter", fields: [submittedById], references: [id], onDelete: SetNull)
+
+  reviews        ScammerReview[]
+
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
   @@index([published, updatedAt])
+  @@index([status])
+}
+
+model ScammerReview {
+  id         String         @id @default(cuid())
+  scammerId  String
+  scammer    Scammer        @relation(fields: [scammerId], references: [id], onDelete: Cascade)
+  action     String         // "submitted" | "screened" | "evidence" | "rejected" | "edit" | "publish" | "unpublish"
+  fromStatus ScammerStatus?
+  toStatus   ScammerStatus?
+  note       String?
+  byAdmin    Boolean        @default(false)
+  byUserId   String?
+  byUser     User?          @relation(fields: [byUserId], references: [id], onDelete: SetNull)
+  byEmail    String?
+  createdAt  DateTime       @default(now())
+
+  @@index([scammerId, createdAt])
+}
+
+model ScamType {
+  id         String   @id @default(cuid())
+  order      Int      @default(0)
+  title      String
+  sign       String
+  flag       String
+  act        String
+  iconFileId String?
+  icon       UploadedFile? @relation("ScamTypeIcon", fields: [iconFileId], references: [id], onDelete: SetNull)
+  published  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([published, order])
 }
 
 model ServiceRequest {

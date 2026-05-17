@@ -18,12 +18,19 @@ export default async function ScammersListPage() {
       <table className="cms-table">
         <thead>
           <tr>
-            <th>이름</th><th>유형</th><th>지역</th><th>접수</th><th>상태</th><th>공개</th><th>최근</th><th></th>
+            <th style={{ width: 56 }}></th><th>이름</th><th>유형</th><th>지역</th><th>접수</th><th>상태</th><th>공개</th><th>최근</th><th></th>
           </tr>
         </thead>
         <tbody>
           {items.map((s) => (
             <tr key={s.id}>
+              <td>
+                {s.photoFileId ? (
+                  <img src={`/api/files/${s.photoFileId}`} alt={s.name} style={{ width: 44, height: 44, objectFit: "cover", border: "1px solid var(--line)" }} />
+                ) : (
+                  <div style={{ width: 44, height: 44, background: "var(--paper-dim)", border: "1px solid var(--line)" }} />
+                )}
+              </td>
               <td><Link href={`/admin/scammers/${s.id}/edit`} className="cms-link">{s.name}</Link>
                 <div className="cms-muted cms-tiny">{s.brief}</div>
               </td>
@@ -41,7 +48,7 @@ export default async function ScammersListPage() {
               </td>
             </tr>
           ))}
-          {items.length === 0 && <tr><td colSpan={8} className="cms-empty">등록된 사례가 없습니다.</td></tr>}
+          {items.length === 0 && <tr><td colSpan={9} className="cms-empty">등록된 사례가 없습니다.</td></tr>}
         </tbody>
       </table>
     </div>

@@ -27,6 +27,7 @@ function mapColumn(c) {
 function mapScammer(s) {
   return {
     cat: s.cat,
+    photoFileId: s.photoFileId || null,
     name: s.name,
     type: s.type,
     location: s.location,
@@ -44,9 +45,22 @@ function mapScammer(s) {
   };
 }
 
+function mapScamType(t) {
+  const n = (t.order || 0).toString().padStart(2, "0");
+  return {
+    num: n,
+    title: t.title,
+    sign: t.sign,
+    flag: t.flag,
+    act: t.act,
+    iconFileId: t.iconFileId || null,
+  };
+}
+
 async function loadData() {
   let dbColumns = [];
   let dbScammers = [];
+  let dbScamTypes = [];
   try {
     const cols = await prisma.column.findMany({
       where: { published: true },
@@ -71,13 +85,29 @@ async function loadData() {
   } catch (e) {
     console.error("home: scammer load failed", e?.message);
   }
-  return { dbColumns, dbScammers };
+  try {
+    const types = await prisma.scamType.findMany({
+      where: { published: true },
+      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+    });
+    dbScamTypes = types.map(mapScamType);
+  } catch (e) {
+    console.error("home: scamType load failed", e?.message);
+  }
+  return { dbColumns, dbScammers, dbScamTypes };
 }
 
 export default async function HomePage() {
-  const [{ dbColumns, dbScammers }, session] = await Promise.all([
+  const [{ dbColumns, dbScammers, dbScamTypes }, session] = await Promise.all([
     loadData(),
     getSessionState(),
   ]);
-  return <HomeClient dbColumns={dbColumns} dbScammers={dbScammers} session={session} />;
+  return (
+    <HomeClient
+      dbColumns={dbColumns}
+      dbScammers={dbScammers}
+      dbScamTypes={dbScamTypes}
+      session={session}
+    />
+  );
 }

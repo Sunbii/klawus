@@ -131,7 +131,7 @@ const victimStories = [
   { cat:"cat-digital", title:"‘검찰입니다’로 시작한 전화", quote:"발신 번호가 한국 영사관이었다. ‘체포영장 발부됐다, 협조하지 않으면 계좌 동결된다’고 했다.", who:"70대 어르신", where:"Bayside, Queens", when:"5일 전" }
 ];
 
-const scamTypes = [
+const FALLBACK_SCAMTYPES = [
   { num:"01", title:"이중 임대 (Double Lease)", sign:"같은 유닛 중복 계약, 보증금만 받고 입주 거부", flag:"현금·Zelle만 요구, 등기 비공개", act:"NYC ACRIS·NJ Property Records로 실소유주 확인" },
   { num:"02", title:"동업 투자금 편취", sign:"고정 배당 약속, 가짜 거래처와 매출 보고서", flag:"감사 없는 재무, Operating Agreement 부재", act:"변호사 검토 후 정관·서명·송금 증빙 보관" },
   { num:"03", title:"공사대금 먹튀", sign:"계약금 50% 선납, 자재 명목 추가 송금", flag:"HIC 라이선스 미보유, LLC 명의 변경", act:"NJ DCA·NY DOS 라이선스 조회, 단계별 지급" },
@@ -180,9 +180,10 @@ function RowHead({ name, more = "더보기", sub = false }) {
   );
 }
 
-export default function HomeClient({ dbScammers, dbColumns, session } = {}) {
+export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, session } = {}) {
   const scammers = dbScammers && dbScammers.length ? dbScammers : FALLBACK_SCAMMERS;
   const columns4 = dbColumns && dbColumns.length ? dbColumns : FALLBACK_COLUMNS;
+  const scamTypes = dbScamTypes && dbScamTypes.length ? dbScamTypes : FALLBACK_SCAMTYPES;
 
   const [q, setQ] = useState("");
   const [notice, setNotice] = useState(false);
@@ -258,7 +259,7 @@ export default function HomeClient({ dbScammers, dbColumns, session } = {}) {
             </>
           ) : (
             <>
-              <a href="#registry">제보하기</a>
+              <a href="/report">사례 제보</a>
               <span className="sep">|</span>
               <a href="#footer">광고 문의</a>
               <span className="sep">|</span>
@@ -421,7 +422,16 @@ export default function HomeClient({ dbScammers, dbColumns, session } = {}) {
 
           {filtered.map((s) => (
             <article key={s.name} className="span-1 reg-card">
-              <span className={`img-slot square ${s.cat}`} aria-hidden="true" />
+              {s.photoFileId ? (
+                <img
+                  src={`/api/files/${s.photoFileId}`}
+                  alt={s.name}
+                  className="img-slot square"
+                  style={{ objectFit: "cover", width: "100%" }}
+                />
+              ) : (
+                <span className={`img-slot square ${s.cat}`} aria-hidden="true" />
+              )}
               <div className="reg-card-body">
                 <div className="reg-card-head">
                   <h3>{s.name}</h3>
@@ -485,8 +495,17 @@ export default function HomeClient({ dbScammers, dbColumns, session } = {}) {
             <a href="#" style={{ color:"var(--red)", fontWeight:600 }}>전체 보기 →</a>
           </div>
           {scamTypes.map((p) => (
-            <article key={p.num} id={p === scamTypes[0] ? "patterns" : undefined} className="span-1 pattern-card">
-              <div className="pattern-num">{p.num}</div>
+            <article key={p.title} id={p === scamTypes[0] ? "patterns" : undefined} className="span-1 pattern-card">
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                {p.iconFileId && (
+                  <img
+                    src={`/api/files/${p.iconFileId}`}
+                    alt=""
+                    style={{ width: 28, height: 28, objectFit: "cover", border: "1px solid var(--line)" }}
+                  />
+                )}
+                <div className="pattern-num">{p.num}</div>
+              </div>
               <h3>{p.title}</h3>
               <dl>
                 <dt>수법</dt><dd>{p.sign}</dd>

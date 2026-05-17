@@ -78,6 +78,8 @@ export async function saveScammerAction(formData) {
   const name = String(formData.get("name") || "").trim();
   if (!name) redirect(id ? `/admin/scammers/${id}/edit?e=name` : `/admin/scammers/new?e=name`);
 
+  const photoFileId = String(formData.get("photoFileId") || "").trim() || null;
+
   const data = {
     name,
     type: String(formData.get("type") || "").trim(),
@@ -97,16 +99,59 @@ export async function saveScammerAction(formData) {
     firstReport: String(formData.get("firstReport") || "").trim() || null,
     lastUpdate: String(formData.get("lastUpdate") || "").trim() || null,
     published: formData.get("published") === "on",
+    photoFileId,
   };
 
   if (id) {
     await prisma.scammer.update({ where: { id }, data });
+    await prisma.scammerReview.create({
+      data: { scammerId: id, action: "edit", byAdmin: true, toStatus: data.status },
+    });
   } else {
-    await prisma.scammer.create({ data: { ...data, slug: slugify(name, "scammer") } });
+    const created = await prisma.scammer.create({
+      data: { ...data, slug: slugify(name, "scammer") },
+    });
+    await prisma.scammerReview.create({
+      data: { scammerId: created.id, action: "submitted", byAdmin: true, toStatus: data.status },
+    });
   }
   revalidatePath("/admin/scammers");
   revalidatePath("/");
   redirect("/admin/scammers");
+}
+
+export async function transitionScammerAction(formData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const toStatus = String(formData.get("toStatus") || "");
+  const action = String(formData.get("action") || "edit");
+  const note = String(formData.get("note") || "").trim() || null;
+  const publishOverride = formData.get("publish");
+
+  const cur = await prisma.scammer.findUnique({ where: { id } });
+  if (!cur) redirect("/admin/scammers");
+
+  const update = {};
+  if (["PENDING", "SCREENED", "EVIDENCE"].includes(toStatus)) update.status = toStatus;
+  if (publishOverride === "on") update.published = true;
+  if (publishOverride === "off") update.published = false;
+
+  await prisma.scammer.update({ where: { id }, data: update });
+  await prisma.scammerReview.create({
+    data: {
+      scammerId: id,
+      action,
+      fromStatus: cur.status,
+      toStatus: update.status ?? cur.status,
+      note,
+      byAdmin: true,
+    },
+  });
+
+  revalidatePath("/admin/scammers");
+  revalidatePath(`/admin/scammers/${id}/edit`);
+  revalidatePath("/");
+  redirect(`/admin/scammers/${id}/edit`);
 }
 
 export async function deleteScammerAction(formData) {

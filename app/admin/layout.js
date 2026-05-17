@@ -22,6 +22,7 @@ export default async function AdminLayout({ children }) {
             <Link href="/admin/users">사용자</Link>
             <Link href="/admin/columns">컬럼</Link>
             <Link href="/admin/scammers">경고 명단</Link>
+            <Link href="/admin/scam-types">사기 유형</Link>
             <Link href="/admin/services">서비스 요청</Link>
             <form action={adminLogoutAction} style={{ display: "inline" }}>
               <button type="submit" className="cms-link-btn">로그아웃</button>

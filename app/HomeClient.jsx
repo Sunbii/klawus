@@ -200,11 +200,50 @@ export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, session
     setNotice(false);
   };
 
+  const [statusFilter, setStatusFilter] = useState(new Set());
+  const [catFilter, setCatFilter] = useState(new Set());
+  const [regionFilter, setRegionFilter] = useState(new Set());
+  const [sortBy, setSortBy] = useState("recent");
+
+  function toggle(setter) {
+    return (key) => setter((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
+  const toggleStatus = toggle(setStatusFilter);
+  const toggleCat = toggle(setCatFilter);
+  const toggleRegion = toggle(setRegionFilter);
+
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
-    if (!term) return scammers;
-    return scammers.filter((s) => matchScammer(s, term));
-  }, [q]);
+    let arr = scammers.slice();
+    if (term) arr = arr.filter((s) => matchScammer(s, term));
+    if (statusFilter.size > 0) arr = arr.filter((s) => statusFilter.has(s.status));
+    if (catFilter.size > 0) arr = arr.filter((s) => catFilter.has(s.cat));
+    if (regionFilter.size > 0) {
+      arr = arr.filter((s) => {
+        const loc = String(s.location || "").toUpperCase();
+        const isNY = loc.includes("NY") || /QUEENS|MANHATTAN|FLUSHING|BAYSIDE|BROOKLYN|BRONX|K-TOWN/.test(loc);
+        const isNJ = loc.includes("NJ") || /FORT LEE|PALISADES|BERGEN|EDGEWATER|LEONIA|CLIFFSIDE/.test(loc);
+        const isOnline = /ONLINE/.test(loc);
+        const isOther = !isNY && !isNJ && !isOnline;
+        return (regionFilter.has("NY") && isNY)
+          || (regionFilter.has("NJ") && isNJ)
+          || (regionFilter.has("ONLINE") && isOnline)
+          || (regionFilter.has("OTHER") && isOther);
+      });
+    }
+    if (sortBy === "cases") {
+      arr.sort((a, b) => (b.cases || 0) - (a.cases || 0));
+    } else if (sortBy === "name") {
+      arr.sort((a, b) => String(a.name).localeCompare(String(b.name), "ko"));
+    } else {
+      arr.sort((a, b) => String(b.lastUpdate || "").localeCompare(String(a.lastUpdate || "")));
+    }
+    return arr;
+  }, [q, scammers, statusFilter, catFilter, regionFilter, sortBy]);
 
   const topCases = scammers.slice(0, 2);
 
@@ -228,6 +267,8 @@ export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, session
 
       <div className="utility">
         <div className="utility-inner">
+          <a href="/search">검색</a>
+          <span className="sep">|</span>
           {session?.kind === "admin" ? (
             <>
               <span className="muted">관리자로 로그인됨</span>
@@ -240,6 +281,8 @@ export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, session
             </>
           ) : session?.kind === "user" ? (
             <>
+              <a href="/report">사례 제보</a>
+              <span className="sep">|</span>
               <span className="muted">
                 {session.user.name}
                 {session.user.role === "LAWYER" ? " 변호사" : " 회원"}님
@@ -409,14 +452,63 @@ export default function HomeClient({ dbScammers, dbColumns, dbScamTypes, session
               <button type="submit">검색</button>
             </form>
             <div className="reg-hints">
-              <span>자주 찾는 키워드:</span>
+              <span>키워드:</span>
               {["이중 임대","동업 투자","보증금 미반환","우편 사기","보이스피싱"].map((k) => (
                 <button key={k} type="button" onClick={() => setQ(k)}>{k}</button>
               ))}
             </div>
+            <div className="reg-hints">
+              <span>지역:</span>
+              {[["NY","뉴욕"],["NJ","뉴저지"],["ONLINE","온라인"],["OTHER","기타"]].map(([k,l]) => (
+                <button
+                  key={k} type="button"
+                  className={regionFilter.has(k) ? "cms-btn-primary" : ""}
+                  onClick={() => toggleRegion(k)}
+                >{l}</button>
+              ))}
+            </div>
+            <div className="reg-hints">
+              <span>상태:</span>
+              {[["evidence","증거 확보"],["screened","검토 완료"],["pending","확인 대기"]].map(([k,l]) => (
+                <button
+                  key={k} type="button"
+                  className={statusFilter.has(k) ? "cms-btn-primary" : ""}
+                  onClick={() => toggleStatus(k)}
+                >{l}</button>
+              ))}
+            </div>
+            <div className="reg-hints">
+              <span>유형:</span>
+              {[
+                ["cat-realestate","부동산·임대"],
+                ["cat-finance","금융·동업"],
+                ["cat-crime","형사·이민"],
+                ["cat-digital","디지털·BEC"],
+                ["cat-mail","우편"],
+                ["cat-community","차용·커뮤니티"],
+              ].map(([k,l]) => (
+                <button
+                  key={k} type="button"
+                  className={catFilter.has(k) ? "cms-btn-primary" : ""}
+                  onClick={() => toggleCat(k)}
+                >{l}</button>
+              ))}
+            </div>
             <div className="reg-meta">
-              <span>총 {scammers.length}건 등록 · 검색 결과 {filtered.length}건</span>
-              <a href="#voices">관련 사연 보기 →</a>
+              <span>총 {scammers.length}건 등록 · 결과 {filtered.length}건</span>
+              <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                정렬:
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  style={{ fontSize: 12, padding: "2px 8px", border: "1px solid var(--line)", background: "var(--paper)" }}
+                >
+                  <option value="recent">최근 갱신</option>
+                  <option value="cases">접수 건수</option>
+                  <option value="name">이름 (가나다)</option>
+                </select>
+                <a href="#voices">관련 사연 →</a>
+              </span>
             </div>
           </div>
 

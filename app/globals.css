@@ -103,6 +103,12 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 }
 .utility a { color: var(--ink-2); }
 .utility a:hover { color: var(--red); }
+.utility .muted { color: var(--muted); }
+.utility-link {
+  border: none; background: transparent; color: var(--ink-2);
+  font-size: 11.5px; cursor: pointer; padding: 0; font-family: inherit;
+}
+.utility-link:hover { color: var(--red); }
 .utility .sep { color: var(--line); }
 
 /* ===== Site header (centered wordmark) ===== */

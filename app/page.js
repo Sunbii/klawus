@@ -1,4 +1,5 @@
 import { prisma } from "../lib/db";
+import { getSessionState } from "../lib/auth";
 import HomeClient from "./HomeClient.jsx";
 
 export const dynamic = "force-dynamic";
@@ -72,6 +73,9 @@ async function loadData() {
 }
 
 export default async function HomePage() {
-  const { dbColumns, dbScammers } = await loadData();
-  return <HomeClient dbColumns={dbColumns} dbScammers={dbScammers} />;
+  const [{ dbColumns, dbScammers }, session] = await Promise.all([
+    loadData(),
+    getSessionState(),
+  ]);
+  return <HomeClient dbColumns={dbColumns} dbScammers={dbScammers} session={session} />;
 }

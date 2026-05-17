@@ -116,3 +116,42 @@ export async function deleteScammerAction(formData) {
   revalidatePath("/admin/scammers");
   revalidatePath("/");
 }
+
+export async function saveServiceAdminAction(formData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const existing = await prisma.serviceRequest.findUnique({ where: { id } });
+  if (!existing) redirect("/admin/services");
+
+  const status = String(formData.get("status") || existing.status);
+  const payment = String(formData.get("payment") || existing.payment);
+  const priceCents = Math.round(parseFloat(String(formData.get("price") || "0")) * 100) || 0;
+  const adminNote = String(formData.get("adminNote") || "").trim() || null;
+  const resultUrl = String(formData.get("resultUrl") || "").trim() || null;
+
+  const bureauStatus = String(formData.get("bureauStatus") || existing.bureauStatus || "NONE");
+  const reportExperian = formData.get("reportExperian") === "on";
+  const reportTransUnion = formData.get("reportTransUnion") === "on";
+  const reportEquifax = formData.get("reportEquifax") === "on";
+  const metroExportUrl = String(formData.get("metroExportUrl") || "").trim() || null;
+
+  await prisma.serviceRequest.update({
+    where: { id },
+    data: {
+      status, payment, priceCents,
+      adminNote, resultUrl,
+      bureauStatus, reportExperian, reportTransUnion, reportEquifax, metroExportUrl,
+      completedAt: status === "COMPLETED" ? (existing.completedAt ?? new Date()) : null,
+    },
+  });
+  revalidatePath("/admin/services");
+  revalidatePath("/me/services");
+  redirect("/admin/services");
+}
+
+export async function deleteServiceAction(formData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  await prisma.serviceRequest.delete({ where: { id } });
+  revalidatePath("/admin/services");
+}

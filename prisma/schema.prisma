@@ -16,31 +16,70 @@ enum ScammerStatus {
   EVIDENCE
 }
 
+enum UserRole {
+  LAWYER
+  MEMBER
+}
+
+enum ServiceType {
+  CREDIT_CHECK
+  BACKGROUND_CHECK
+  DEBT_CREDIT_REPORTING
+}
+
+enum ServiceStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  WAIVED
+  REFUNDED
+}
+
+enum BureauReportStatus {
+  NONE
+  QUEUED
+  EXPORTED
+  SUBMITTED
+  ACKNOWLEDGED
+}
+
 model InviteCode {
   id         String    @id @default(cuid())
   code       String    @unique
   note       String?
   createdAt  DateTime  @default(now())
   redeemedAt DateTime?
-  lawyer     Lawyer?
+  user       User?
 }
 
-model Lawyer {
+model User {
   id           String      @id @default(cuid())
   email        String      @unique
   passwordHash String
   name         String
+  phone        String?
+  state        String?
+  role         UserRole    @default(MEMBER)
+
+  // Lawyer-only fields
   firm         String?
   barNumber    String?
-  state        String?
   field        String?
   bio          String?
-  createdAt    DateTime    @default(now())
 
   inviteCodeId String?     @unique
   inviteCode   InviteCode? @relation(fields: [inviteCodeId], references: [id])
 
-  columns      Column[]
+  columns         Column[]
+  serviceRequests ServiceRequest[]
+
+  createdAt    DateTime    @default(now())
 }
 
 model Column {
@@ -57,7 +96,7 @@ model Column {
   updatedAt   DateTime  @updatedAt
 
   authorId    String
-  author      Lawyer    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   sponsorLabel   String?
   sponsorWho     String?
@@ -89,4 +128,45 @@ model Scammer {
   updatedAt   DateTime      @updatedAt
 
   @@index([published, updatedAt])
+}
+
+model ServiceRequest {
+  id         String         @id @default(cuid())
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       ServiceType
+  status     ServiceStatus  @default(PENDING)
+  payment    PaymentStatus  @default(UNPAID)
+  priceCents Int            @default(0)
+
+  // Subject of the check / debt
+  subjectName    String
+  subjectPhone   String?
+  subjectEmail   String?
+  subjectAddress String?
+  subjectDob     String?
+  subjectSsn4    String?
+
+  note      String?
+
+  // Admin handling
+  adminNote String?
+  resultUrl String?
+
+  // For DEBT_CREDIT_REPORTING
+  debtAmountCents  Int?
+  debtSince        String?
+  creditorName     String?
+  reportExperian   Boolean             @default(false)
+  reportTransUnion Boolean             @default(false)
+  reportEquifax    Boolean             @default(false)
+  bureauStatus     BureauReportStatus  @default(NONE)
+  metroExportUrl   String?
+
+  requestedAt DateTime  @default(now())
+  completedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status])
+  @@index([userId])
 }

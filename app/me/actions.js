@@ -5,17 +5,43 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "../../lib/db";
 import { getSession } from "../../lib/session";
-import { requireLawyer } from "../../lib/auth";
+import { requireLawyer, requireUser } from "../../lib/auth";
 import { slugify } from "../../lib/codes";
+
+export async function signupAction(formData) {
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const password = String(formData.get("password") || "");
+  const name = String(formData.get("name") || "").trim();
+  const phone = String(formData.get("phone") || "").trim() || null;
+  const state = String(formData.get("state") || "").trim() || null;
+
+  if (!email || !name || password.length < 8) {
+    redirect("/signup?e=fields");
+  }
+  const dupe = await prisma.user.findUnique({ where: { email } });
+  if (dupe) redirect("/signup?e=email");
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  const user = await prisma.user.create({
+    data: { email, passwordHash, name, phone, state, role: "MEMBER" },
+  });
+
+  const session = await getSession();
+  session.kind = "user";
+  session.userId = user.id;
+  await session.save();
+  redirect("/me");
+}
 
 export async function redeemAction(formData) {
   const code = String(formData.get("code") || "").trim();
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
   const name = String(formData.get("name") || "").trim();
+  const phone = String(formData.get("phone") || "").trim() || null;
+  const state = String(formData.get("state") || "").trim() || null;
   const firm = String(formData.get("firm") || "").trim() || null;
   const barNumber = String(formData.get("barNumber") || "").trim() || null;
-  const state = String(formData.get("state") || "").trim() || null;
   const field = String(formData.get("field") || "").trim() || null;
   const bio = String(formData.get("bio") || "").trim() || null;
 
@@ -28,50 +54,52 @@ export async function redeemAction(formData) {
     redirect(`/redeem/${encodeURIComponent(code)}?e=code`);
   }
 
-  const dupe = await prisma.lawyer.findUnique({ where: { email } });
+  const dupe = await prisma.user.findUnique({ where: { email } });
   if (dupe) redirect(`/redeem/${encodeURIComponent(code)}?e=email`);
 
   const passwordHash = await bcrypt.hash(password, 12);
-  const lawyer = await prisma.lawyer.create({
+  const user = await prisma.user.create({
     data: {
-      email, passwordHash, name, firm, barNumber, state, field, bio,
+      email, passwordHash, name, phone, state,
+      firm, barNumber, field, bio,
+      role: "LAWYER",
       inviteCodeId: invite.id,
     },
   });
   await prisma.inviteCode.update({ where: { id: invite.id }, data: { redeemedAt: new Date() } });
 
   const session = await getSession();
-  session.kind = "lawyer";
-  session.lawyerId = lawyer.id;
+  session.kind = "user";
+  session.userId = user.id;
   await session.save();
   redirect("/me");
 }
 
-export async function lawyerLoginAction(formData) {
+export async function loginAction(formData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
   if (!email || !password) redirect("/login?e=1");
 
-  const lawyer = await prisma.lawyer.findUnique({ where: { email } });
-  if (!lawyer) redirect("/login?e=1");
-  const ok = await bcrypt.compare(password, lawyer.passwordHash);
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) redirect("/login?e=1");
+  const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) redirect("/login?e=1");
 
   const session = await getSession();
-  session.kind = "lawyer";
-  session.lawyerId = lawyer.id;
+  session.kind = "user";
+  session.userId = user.id;
   await session.save();
   redirect("/me");
 }
 
-export async function lawyerLogoutAction() {
+export async function logoutAction() {
   const session = await getSession();
   session.destroy();
   redirect("/");
 }
 
 export async function saveOwnColumnAction(formData) {
-  const lawyer = await requireLawyer();
+  const user = await requireLawyer();
   const id = formData.get("id") ? String(formData.get("id")) : null;
   const title = String(formData.get("title") || "").trim();
   const field = String(formData.get("field") || "").trim();
@@ -87,7 +115,7 @@ export async function saveOwnColumnAction(formData) {
 
   if (id) {
     const existing = await prisma.column.findUnique({ where: { id } });
-    if (!existing || existing.authorId !== lawyer.id) redirect("/me");
+    if (!existing || existing.authorId !== user.id) redirect("/me");
     await prisma.column.update({
       where: { id },
       data: {
@@ -105,7 +133,7 @@ export async function saveOwnColumnAction(formData) {
         sponsorLabel, sponsorWho, sponsorContact,
         published: publish,
         publishedAt: publish ? new Date() : null,
-        authorId: lawyer.id,
+        authorId: user.id,
       },
     });
   }
@@ -115,12 +143,51 @@ export async function saveOwnColumnAction(formData) {
 }
 
 export async function deleteOwnColumnAction(formData) {
-  const lawyer = await requireLawyer();
+  const user = await requireLawyer();
   const id = String(formData.get("id"));
   const col = await prisma.column.findUnique({ where: { id } });
-  if (!col || col.authorId !== lawyer.id) redirect("/me");
+  if (!col || col.authorId !== user.id) redirect("/me");
   await prisma.column.delete({ where: { id } });
   revalidatePath("/me");
   revalidatePath("/");
   redirect("/me");
+}
+
+export async function submitServiceRequestAction(formData) {
+  const user = await requireUser();
+  const type = String(formData.get("type") || "");
+  if (!["CREDIT_CHECK", "BACKGROUND_CHECK", "DEBT_CREDIT_REPORTING"].includes(type)) {
+    redirect("/me/services/new?e=type");
+  }
+  const subjectName = String(formData.get("subjectName") || "").trim();
+  if (!subjectName) redirect("/me/services/new?e=subject");
+
+  const priceMap = {
+    CREDIT_CHECK: 4900,        // $49.00
+    BACKGROUND_CHECK: 9900,    // $99.00
+    DEBT_CREDIT_REPORTING: 14900, // $149.00
+  };
+
+  await prisma.serviceRequest.create({
+    data: {
+      userId: user.id,
+      type,
+      priceCents: priceMap[type] || 0,
+      subjectName,
+      subjectPhone:   String(formData.get("subjectPhone") || "").trim() || null,
+      subjectEmail:   String(formData.get("subjectEmail") || "").trim() || null,
+      subjectAddress: String(formData.get("subjectAddress") || "").trim() || null,
+      subjectDob:     String(formData.get("subjectDob") || "").trim() || null,
+      subjectSsn4:    String(formData.get("subjectSsn4") || "").trim().slice(0, 4) || null,
+      note:           String(formData.get("note") || "").trim() || null,
+      debtAmountCents: type === "DEBT_CREDIT_REPORTING"
+        ? Math.round(parseFloat(String(formData.get("debtAmount") || "0")) * 100) || null
+        : null,
+      debtSince:    type === "DEBT_CREDIT_REPORTING" ? (String(formData.get("debtSince") || "").trim() || null) : null,
+      creditorName: type === "DEBT_CREDIT_REPORTING" ? (String(formData.get("creditorName") || "").trim() || null) : null,
+    },
+  });
+  revalidatePath("/me/services");
+  revalidatePath("/admin/services");
+  redirect("/me/services");
 }

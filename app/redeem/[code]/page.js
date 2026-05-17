@@ -54,13 +54,21 @@ export default async function RedeemPage({ params, searchParams }) {
           </label>
         </div>
         <div className="cms-grid-2">
-          <label className="cms-label">주 (선택)
-            <input name="state" className="cms-input" placeholder="예: NY 또는 NJ" />
+          <label className="cms-label">전화
+            <input name="phone" required className="cms-input" placeholder="예: 201-555-0123" />
           </label>
-          <label className="cms-label">Bar # (선택)
-            <input name="barNumber" className="cms-input" />
+          <label className="cms-label">주
+            <select name="state" required className="cms-input" defaultValue="">
+              <option value="" disabled>선택</option>
+              <option value="NY">뉴욕 (NY)</option>
+              <option value="NJ">뉴저지 (NJ)</option>
+              <option value="OTHER">그 외</option>
+            </select>
           </label>
         </div>
+        <label className="cms-label">Bar # (선택)
+          <input name="barNumber" className="cms-input" />
+        </label>
         <label className="cms-label">간단 소개 (선택)
           <textarea name="bio" rows={3} className="cms-input" />
         </label>

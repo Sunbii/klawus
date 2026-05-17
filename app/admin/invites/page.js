@@ -44,10 +44,10 @@ export default async function InvitesPage() {
                 )}
               </td>
               <td>
-                {inv.lawyer ? (
+                {inv.user ? (
                   <>
-                    {inv.lawyer.name}
-                    <div className="cms-muted cms-tiny">{inv.lawyer.email}</div>
+                    {inv.user.name}
+                    <div className="cms-muted cms-tiny">{inv.user.email}</div>
                   </>
                 ) : (
                   <span className="cms-muted">—</span>

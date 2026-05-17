@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { logoutAction } from "./me/actions";
+import { adminLogoutAction } from "./admin/actions";
 
 const NOTICE_KEY = "klawus-notice-v4";
 
@@ -178,7 +180,7 @@ function RowHead({ name, more = "더보기", sub = false }) {
   );
 }
 
-export default function HomeClient({ dbScammers, dbColumns } = {}) {
+export default function HomeClient({ dbScammers, dbColumns, session } = {}) {
   const scammers = dbScammers && dbScammers.length ? dbScammers : FALLBACK_SCAMMERS;
   const columns4 = dbColumns && dbColumns.length ? dbColumns : FALLBACK_COLUMNS;
 
@@ -225,11 +227,46 @@ export default function HomeClient({ dbScammers, dbColumns } = {}) {
 
       <div className="utility">
         <div className="utility-inner">
-          <a href="#registry">제보하기</a>
-          <span className="sep">|</span>
-          <a href="#footer">광고 문의</a>
-          <span className="sep">|</span>
-          <a href="#">변호사 로그인</a>
+          {session?.kind === "admin" ? (
+            <>
+              <span className="muted">관리자로 로그인됨</span>
+              <span className="sep">|</span>
+              <a href="/admin">관리자 페이지</a>
+              <span className="sep">|</span>
+              <form action={adminLogoutAction} style={{ display: "inline" }}>
+                <button type="submit" className="utility-link">로그아웃</button>
+              </form>
+            </>
+          ) : session?.kind === "user" ? (
+            <>
+              <span className="muted">
+                {session.user.name}
+                {session.user.role === "LAWYER" ? " 변호사" : " 회원"}님
+              </span>
+              <span className="sep">|</span>
+              <a href="/me">내 페이지</a>
+              {session.user.role === "MEMBER" && (
+                <>
+                  <span className="sep">|</span>
+                  <a href="/me/services/new">서비스 신청</a>
+                </>
+              )}
+              <span className="sep">|</span>
+              <form action={logoutAction} style={{ display: "inline" }}>
+                <button type="submit" className="utility-link">로그아웃</button>
+              </form>
+            </>
+          ) : (
+            <>
+              <a href="#registry">제보하기</a>
+              <span className="sep">|</span>
+              <a href="#footer">광고 문의</a>
+              <span className="sep">|</span>
+              <a href="/signup">회원가입</a>
+              <span className="sep">|</span>
+              <a href="/login">로그인</a>
+            </>
+          )}
         </div>
       </div>
 

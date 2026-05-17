@@ -1,124 +1,160 @@
-const focusAreas = [
+const issueColumns = [
   {
-    title: "사기 수법 아카이브",
-    description:
-      "차용금 미상환, 계약금 편취, 투자 사기, 커뮤니티 소개를 악용한 반복 수법을 유형별로 정리합니다."
+    title: "금전 사기",
+    blurb: "돈을 빌려간 뒤 악의적으로 갚지 않는 경우, 투자금 편취, 공사 계약금 먹튀, 반복적 거래 사기를 다룹니다.",
+    points: ["차용증·송금내역 정리", "반복 피해 여부 확인", "공공기록 연결", "집단 제보 가능성 검토"]
   },
   {
     title: "집주인-세입자 분쟁",
-    description:
-      "보증금 미반환, 허위 임대 광고, 강제퇴거 압박, 반복 임대 분쟁 같은 생활형 피해를 별도 축으로 다룹니다."
+    blurb: "보증금 미반환, 허위 임대 광고, 거주 불능 상태 은폐, 강압적 퇴거 시도 같은 생활형 피해를 분리해 다룹니다.",
+    points: ["임대차 문서 확보", "사진·수리 이력 정리", "주 법률 리소스 연결", "패턴성 분쟁 여부 검토"]
   },
   {
-    title: "증거 중심 제보",
-    description:
-      "감정적 폭로가 아니라 송금내역, 계약서, 문자, 판결문, 공공기록을 기반으로 검토하는 구조를 만듭니다."
+    title: "커뮤니티 경보",
+    blurb: "같은 이름, 같은 전화번호, 같은 업체, 같은 수법이 반복되는 경우 조용히 흩어지지 않도록 경고 구조를 만듭니다.",
+    points: ["제보 누적 확인", "검증 레벨 표기", "반론 절차 운영", "전문가 검토 연결"]
   }
 ];
 
-const safetyRules = [
-  "민족이나 종교가 아니라 검증 가능한 행위와 기록만 다룹니다.",
-  "실명 공개는 검토와 증빙 기준을 충족한 사례에 한정합니다.",
-  "반론권, 정정 요청, 삭제 요청 절차를 공개적으로 운영합니다.",
-  "주민번호, 계좌번호, 주소 등 민감정보는 공개하지 않습니다."
-];
-
-const caseTracks = [
+const trustPillars = [
   {
-    label: "금전 피해",
-    items: ["차용금 미상환", "공사·리모델링 계약금 편취", "투자금 편취", "중고거래 사기"]
+    label: "Evidence first",
+    title: "소문보다 증거",
+    text: "문자, 계약서, 송금내역, 판결문, 공공기록이 없는 실명 폭로는 올리지 않습니다."
   },
   {
-    label: "주거 분쟁",
-    items: ["보증금 미반환", "허위 매물", "거주 불능 상태 은폐", "반복적 악성 임대 분쟁"]
+    label: "Due process",
+    title: "정정과 반론 절차",
+    text: "사실 오류, 신원 오인, 해결 완료 사안은 정정 요청과 반론권 절차를 둡니다."
   },
   {
-    label: "피해자 지원",
-    items: ["증거 정리 가이드", "공식 신고 링크", "변호사·전문가 연결", "집단 제보 연결"]
+    label: "Community safety",
+    title: "피해자 보호 우선",
+    text: "피해자가 무엇을 모아야 하고 어디에 신고해야 하는지 즉시 행동 경로를 제공합니다."
   }
 ];
 
-const roadmap = [
+const actions = [
   {
-    step: "Phase 1",
-    title: "예방 허브 오픈",
-    description: "사기 수법과 임대 분쟁 가이드를 먼저 공개하고, 제보는 비공개로 수집합니다."
+    step: "01",
+    title: "피해 기록 정리",
+    text: "사건 날짜, 이름, 약속 내용, 송금 내역, 계약 문서를 한 번에 정리할 수 있게 돕습니다."
   },
   {
-    step: "Phase 2",
-    title: "검증된 사례 공개",
-    description: "공공기록과 충분한 증빙이 확인된 사례만 검증 레이블과 함께 공개합니다."
+    step: "02",
+    title: "운영 검토",
+    text: "단순 비방인지, 실제 피해인지, 공공기록으로 이어지는지 검토 레벨을 나눕니다."
   },
   {
-    step: "Phase 3",
-    title: "전문가 네트워크 확장",
-    description: "변호사, 소비자 보호 전문가, 주거 분쟁 지원 업체와의 연결을 수익 모델로 발전시킵니다."
+    step: "03",
+    title: "공개 또는 연결",
+    text: "공개 경고가 필요한 사건은 검증 레이블과 함께 구조화하고, 나머지는 전문가 도움으로 연결합니다."
   }
+];
+
+const proofLevels = [
+  "Submitted",
+  "Screened",
+  "Corroborated",
+  "Public Record Confirmed"
 ];
 
 export default function HomePage() {
   return (
     <main className="page-shell">
-      <section className="hero">
+      <header className="topbar">
+        <a href="/" className="brandmark">
+          <span className="brand-dot" />
+          <span>K-lawus</span>
+        </a>
+        <nav className="topnav">
+          <a href="#mission">문제정의</a>
+          <a href="#issues">핵심분야</a>
+          <a href="#process">운영방식</a>
+          <a href="#standards">원칙</a>
+        </nav>
+      </header>
+
+      <section className="hero" id="mission">
         <div className="hero-copy">
-          <p className="eyebrow">Evidence-led community protection</p>
-          <h1>K-lawus는 소문이 아니라 기록으로 사람을 지키는 플랫폼입니다.</h1>
+          <p className="eyebrow">Korean-American community protection platform</p>
+          <h1>사기꾼이 편하게 살고 피해자가 숨어버리는 구조를 뒤집어야 합니다.</h1>
           <p className="lede">
-            미주 한인 사회에서 반복되는 금전 사기, 계약 분쟁, 집주인-세입자 피해를 예방하고
-            피해자가 혼자 남지 않도록 돕는 공익형 플랫폼을 목표로 합니다.
+            K-lawus는 미주 한인 사회와 그 주변 거래권에서 반복되는 금전 사기, 악의적 미상환,
+            집주인-세입자 분쟁, 계약형 피해를 기록과 검토 중심으로 다루는 플랫폼입니다.
           </p>
           <div className="hero-actions">
-            <a href="#blueprint" className="primary-link">
-              MVP 구조 보기
+            <a href="#issues" className="primary-link">
+              어떤 문제를 다루는가
             </a>
-            <a href="#standards" className="secondary-link">
-              운영 원칙 보기
+            <a href="#process" className="secondary-link">
+              운영 방식 보기
             </a>
+          </div>
+          <div className="hero-metrics">
+            <div>
+              <strong>3</strong>
+              <span>핵심 피해 축</span>
+            </div>
+            <div>
+              <strong>4</strong>
+              <span>검증 레벨</span>
+            </div>
+            <div>
+              <strong>1</strong>
+              <span>공익적 기준</span>
+            </div>
           </div>
         </div>
-        <aside className="hero-panel">
-          <span className="panel-label">Verification framework</span>
-          <div className="signal-card">
-            <strong>Received</strong>
-            <p>제보 접수</p>
+
+        <aside className="hero-rail">
+          <div className="rail-card rail-intro">
+            <p className="rail-label">What this is</p>
+            <h2>분노의 게시판이 아니라 피해 예방 시스템</h2>
+            <p>
+              실명 노출 자체가 목적이 아니라, 반복 피해를 막고 피해자가 증거를 잃기 전에
+              움직이게 만드는 것이 목적입니다.
+            </p>
           </div>
-          <div className="signal-card">
-            <strong>Corroborated</strong>
-            <p>복수 자료 또는 다중 제보로 보강</p>
-          </div>
-          <div className="signal-card">
-            <strong>Public Record Confirmed</strong>
-            <p>판결문·법원기록·공식 문서 기반 확인</p>
+
+          <div className="rail-card">
+            <p className="rail-label">Verification ladder</p>
+            <ul className="proof-list">
+              {proofLevels.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
           </div>
         </aside>
       </section>
 
-      <section className="focus-grid">
-        {focusAreas.map((area) => (
-          <article key={area.title} className="glass-card">
-            <h2>{area.title}</h2>
-            <p>{area.description}</p>
-          </article>
-        ))}
+      <section className="manifesto-grid">
+        <article className="manifesto-card accent-card">
+          <span className="card-tag">Why now</span>
+          <h2>돈을 떼이고, 보증금을 잃고, 계약을 당해도 커뮤니티 안에서는 조용히 끝나버리는 경우가 너무 많습니다.</h2>
+        </article>
+        <article className="manifesto-card">
+          <span className="card-tag">What changes</span>
+          <p>
+            K-lawus는 흩어진 피해를 패턴으로 바꾸고, 개별 억울함을 구조적인 경고 시스템으로 바꾸는
+            데 초점을 둡니다.
+          </p>
+        </article>
       </section>
 
-      <section id="blueprint" className="split-section">
-        <div>
-          <p className="section-kicker">What the first release should do</p>
-          <h2>첫 버전은 블랙리스트보다 먼저 신뢰 구조를 보여줘야 합니다.</h2>
-          <p>
-            공개 폭로 사이트처럼 보이면 오래 버티기 어렵습니다. 그래서 초반 제품은 예방,
-            검토, 기록, 지원을 먼저 보여주고, 검증된 사례 공개는 단계적으로 여는 편이
-            현실적입니다.
-          </p>
+      <section className="issues-section" id="issues">
+        <div className="section-heading">
+          <p className="section-kicker">Coverage</p>
+          <h2>핵심은 넓게 흩어지는 것이 아니라, 실제로 반복되는 피해군을 정면으로 잡는 것입니다.</h2>
         </div>
-        <div className="stacked-panels">
-          {caseTracks.map((track) => (
-            <article key={track.label} className="track-card">
-              <h3>{track.label}</h3>
+        <div className="issue-grid">
+          {issueColumns.map((column) => (
+            <article key={column.title} className="issue-card">
+              <h3>{column.title}</h3>
+              <p>{column.blurb}</p>
               <ul>
-                {track.items.map((item) => (
-                  <li key={item}>{item}</li>
+                {column.points.map((point) => (
+                  <li key={point}>{point}</li>
                 ))}
               </ul>
             </article>
@@ -126,54 +162,49 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="standards" className="standards-section">
-        <div className="section-heading">
-          <p className="section-kicker">Trust and safeguards</p>
-          <h2>운영 원칙이 약하면 이 프로젝트는 좋은 뜻으로도 오래 갈 수 없습니다.</h2>
+      <section className="process-section" id="process">
+        <div className="process-panel">
+          <div className="section-heading compact">
+            <p className="section-kicker">Response flow</p>
+            <h2>피해자가 들어오면 바로 다음 행동이 보여야 합니다.</h2>
+          </div>
+          <div className="timeline">
+            {actions.map((action) => (
+              <article key={action.step} className="timeline-card">
+                <span>{action.step}</span>
+                <h3>{action.title}</h3>
+                <p>{action.text}</p>
+              </article>
+            ))}
+          </div>
         </div>
-        <div className="rules-grid">
-          {safetyRules.map((rule) => (
-            <article key={rule} className="rule-card">
-              <p>{rule}</p>
-            </article>
-          ))}
+
+        <div className="cta-stack">
+          <article className="cta-card dark-card">
+            <p className="rail-label">Phase 1</p>
+            <h3>먼저 필요한 것은 조심스러운 공개보다 강한 intake 구조입니다.</h3>
+            <p>첫 버전은 제보 수집, 증거 정리, 사기 유형 아카이브, 임대 분쟁 가이드에 집중해야 합니다.</p>
+          </article>
+
+          <article className="cta-card">
+            <p className="rail-label">Revenue with integrity</p>
+            <h3>수익은 사건을 팔아서가 아니라 해결을 연결해서 만들어야 합니다.</h3>
+            <p>변호사, 주거 분쟁 전문가, 문서 정리 지원, 공증·번역 서비스 연결이 자연스러운 수익축입니다.</p>
+          </article>
         </div>
       </section>
 
-      <section className="reporting-section">
-        <div className="reporting-card">
-          <p className="section-kicker">Victim flow</p>
-          <h2>피해자가 들어오면 바로 무엇을 해야 하는지 보여줘야 합니다.</h2>
-          <ol>
-            <li>사건 일시, 상대방 정보, 약속 내용, 현재 상태를 정리합니다.</li>
-            <li>계약서, 송금내역, 문자, 이메일, 녹취, 사진 등 증거를 업로드합니다.</li>
-            <li>운영진 검토 후 비공개 보관, 추가자료 요청, 공개 검토 여부를 분기합니다.</li>
-            <li>필요시 변호사·주거 분쟁 전문가·공식 신고 채널로 연결합니다.</li>
-          </ol>
-        </div>
-        <div className="resource-card">
-          <p className="section-kicker">Monetization with trust</p>
-          <h2>수익은 신뢰를 해치지 않는 방식으로 붙여야 합니다.</h2>
-          <ul>
-            <li>변호사 광고와 상담 연결</li>
-            <li>주거 분쟁 및 채권 회수 지원 서비스</li>
-            <li>증거 정리, 문서 패키징, 번역·공증 지원</li>
-            <li>커뮤니티 후원 및 공익 파트너십</li>
-          </ul>
-        </div>
-      </section>
-
-      <section className="roadmap-section">
+      <section className="standards-section" id="standards">
         <div className="section-heading">
-          <p className="section-kicker">Launch path</p>
-          <h2>단계적으로 열어야 리스크를 통제하면서도 영향력을 키울 수 있습니다.</h2>
+          <p className="section-kicker">Standards</p>
+          <h2>이 프로젝트가 버티려면 감정이 아니라 기준이 전면에 있어야 합니다.</h2>
         </div>
-        <div className="roadmap-grid">
-          {roadmap.map((item) => (
-            <article key={item.step} className="roadmap-card">
-              <span>{item.step}</span>
-              <h3>{item.title}</h3>
-              <p>{item.description}</p>
+        <div className="pillars-grid">
+          {trustPillars.map((pillar) => (
+            <article key={pillar.title} className="pillar-card">
+              <span>{pillar.label}</span>
+              <h3>{pillar.title}</h3>
+              <p>{pillar.text}</p>
             </article>
           ))}
         </div>
